@@ -3,22 +3,34 @@ export default (sequelize, DataTypes) => {
       id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
-        autoIncrement: true
+        autoIncrement: true,
+        unique: {
+            msg: "Id aldready registrated"
+          },
       },
-      amount: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        validate: {
-            isInt: {msg: 'Amount has to be an integer'},
-            notNull: {msg: 'Amount can t be null'},
-        }
-      },
-      TxId: {
+      TxHash: {
         type: DataTypes.STRING,
+        allowNull: false,
         validate: {
             notEmpty: {msg: 'Tx hash can t be empty'},
             notNull: {msg: 'Tx hash has can t be null'}
           }
-      }
+      },
+      amount: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            isInt: {msg: 'Amount has to be an string'},
+            notNull: {msg: 'Amount can t be null'},
+        }
+      },
+      currency: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {msg: 'currency hash can t be empty'},
+            notNull: {msg: 'currency hash has can t be null'}
+          }
+      },
     })
   }
