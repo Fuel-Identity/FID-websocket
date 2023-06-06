@@ -2,23 +2,29 @@ import { getTxFromBlock } from "./functions.js";
 import { fetchTransactions } from "./txFetcher.js";
 
 export const targetedBlocks = [
-    906668,
-    906669,
-    906700,
-    906701,
-    906702,
-    906703,
-    906704,
-    906705,
-    906706,
     906707,
     906708,
+    906709,
+    906710,
+    906711,
+    906712,
+    906713,
+    906714
 ]
 
 export function blockfetcher({ blocks }) {
     blocks.forEach(async block => {
-        const txs = await getTxFromBlock(block);
-        console.log(fetchTransactions(txs));
+       const txs = await fetchTransactions(await getTxFromBlock(block));
+       txs.forEach(({ id, from, to, assetsInput, assetsOutputs }) => {
+        console.log({
+            id,
+            block,
+            from,
+            to,
+            assetsInput,
+            assetsOutputs
+           });
+       })
     });
 }
 

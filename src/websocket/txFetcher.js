@@ -7,8 +7,8 @@ export function fetchTransactions(txs) {
             id: null,
             from: null,
             to: null,
-            receivedAssets: [],
-            sendedAssets: [],
+            assetsInput: [],
+            assetsOutputs: [],
         }
 
         if (status.__typename === 'SuccessStatus') { // keep only successfull tx
@@ -21,13 +21,14 @@ export function fetchTransactions(txs) {
                         messageId,
                         sender,
                         recipient,
-                        amount
+                        amount,
+                        assetId
                     }) => {
 
                         // InputCoin
-                        if (owner && amount > 0) {
-                            txData.from = owner
-                            txData.sendedAssets.push({
+                        if (owner) {
+                            txData.from = owner;
+                            txData.assetsInput.push({
                                 amount,
                                 assetId
                             })
@@ -42,7 +43,7 @@ export function fetchTransactions(txs) {
                         if (messageId) {
                             txData.from = sender
                             txData.to = recipient
-                            txData.sendedAssets.push({ amount })
+                            txData.assetsInput.push({ amount })
                             console.log('message: ', messageId);
                         }
 
@@ -51,23 +52,23 @@ export function fetchTransactions(txs) {
 
             if (outputs) {
 
-                const coinOutputs = ['CoinOutput', 'ChangeOutput', 'VariableOutput']
                 outputs.forEach(
                     ({
                         to,
                         amount,
                         assetId,
-                        __typename,
                         contract
                     }) => {
 
                         // InputCoin
-                        if (coinOutputs.includes(__typename) && amount > 0) {
-                            txData.from = to
-                            txData.receivedAssets.push({
+                        if (to) {
+                            if(to != txData.from) txData.to = to;
+
+                            txData.assetsOutputs.push({
                                 amount,
                                 assetId
-                            })
+                            });
+
                         }
 
                         // Contract creation
