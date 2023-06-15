@@ -8,6 +8,9 @@ export default (sequelize, DataTypes) => {
       address: {
         type: DataTypes.STRING,
         allowNull: false,
+        unique: {
+          msg: "Wallet aldready registrated"
+        },
         validate: {
             notEmpty: {msg: 'address hash can t be empty'},
             notNull: {msg: 'address hash has can t be null'}
