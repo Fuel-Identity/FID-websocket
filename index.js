@@ -3,25 +3,26 @@ import { createServer } from 'http';
 import WebSocket, { WebSocketServer } from 'ws';
 import { blockfetcher } from './src/websocket/blockfetcher.js';
 import { initDb } from './src/db/sequelize.js';
+import { getLatestBlocksCursor } from './src/websocket/functions.js';
+import logger from './src/logger/index.js';
 
 const app = express();
 const server = createServer(app);
+const log = logger()
 
 const wss = new WebSocketServer({ server });
 const port = process.env.PORT || 8080
 
-initDb();
+await initDb();
 
-function generateBlocks(startHeight, number) {
-  const blocks = []
-  for (let index = 0; index < number; index++) {
-      blocks.push(startHeight + index);
-  } return blocks;
-} 
+// const lastCursor = await getLatestBlocksCursor();
 
-const targetedBlocks = generateBlocks(888888, 10);
+blockfetcher({blocks: null, auto: true});
 
-blockfetcher({blocks: targetedBlocks});
+const blocks = [
+  100718,
+]
+//blockfetcher({ block: 100718 });
 
 
 wss.on('connection', (ws) => {
@@ -30,7 +31,7 @@ wss.on('connection', (ws) => {
 
 //start our server
 server.listen(port, () => {
-  console.log(`Server started on port ${port}`);
+  log.info({ port }, `Server started`);
 });
 
 

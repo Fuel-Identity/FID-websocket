@@ -1,47 +1,93 @@
-import { getTxFromBlock } from "./functions.js";
-import { fetchTransactions } from "./txFetcher.js";
-import { Transaction, Wallet, TxAsset } from "../db/sequelize.js";
+import { Worker } from 'worker_threads';
+import { getTxFromBlock, saveTx, saveTxAssets, saveWallets } from './functions.js';
+import fetchTx from './txFetcher.js'
+import logger from '../logger/index.js';
 
-function saveWallets({ from, to }) {
-    const wallets = [from, to];
-    wallets.forEach(wallet => Wallet.create({ address: wallet }).then(() => console.log('Wallet saved')));
+const workerState = {
+    maxWorkers: 3,
+    currentWorkers: 0,
 }
 
-function saveTxAssets({ id, assetsInput, assetsOutputs }) {
-    assetsInput.forEach(({ amount, assetId}) => {
-        TxAsset.create({
-            amount: amount,
-            currency: assetId,
-            TxHash: id
-        })
-    });
+const log = logger()
 
-    assetsOutputs.forEach(({ amount, assetId}) => {
-        TxAsset.create({
-            amount: amount,
-            currency: assetId,
-            TxHash: id
-        })
+function workBlock(block) {
+    new Promise((resolve, reject) => {
+        const worker = new Worker('./src/websocket/blockWorker.js', {
+            workerData: block,
+        });
+
+        worker.on('message', (txs) => {
+            handleTxs(block, txs)
+        });
+
+        worker.on('error', (code) => {
+            if(code instanceof TypeError) {
+                reject(new TypeError(`Error while fetching block ${block}`))
+            }
+
+            if (code !== 0) {
+                workerState.currentWorkers = workerState.currentWorkers - 1
+                reject(new Error(`Worker stopped with exit code ${code}`));
+
+            }
+        });
+
+        worker.on('exit', (code) => {
+            workerState.currentWorkers = workerState.currentWorkers - 1
+            if (code !== 0)
+                reject(new Error(`Worker exited with exit code ${code}`));
+            resolve()
+        });
+    })
+    .then(() => {
+        log.info({ block }, `New block handled`)
+    })
+    .catch((err) => {
+        if(err instanceof TypeError) {
+            log.warn({ block },'Retring working block');
+            workBlock(block)
+            return
+        } 
+         
+        log.error({ error: err }, 'Block worker error')
+    })
+
+};
+
+
+function handleblock(block) {
+    if (workerState.currentWorkers < workerState.maxWorkers) {
+        workerState.currentWorkers = workerState.currentWorkers + 1
+        workBlock(block)
+        return
+    }
+
+    setTimeout(() => {
+        handleblock(block)
+    }, 500)
+}
+
+const handleTxs = (block, txs) => {
+    txs.forEach(tx => {
+        saveWallets(tx)
+        saveTx(block, tx);
+        saveTxAssets(tx)
     })
 }
 
-function saveTx(block, { id, from, to, assetsInput, assetsOutputs }) {
-    Transaction.create({
-        txHash: id, 
-        blockHeight: block,
-        from, 
-        to
-    }).then(() => console.log('Tx saved'));
-}
 
-export function blockfetcher({ blocks }) {
-    blocks.forEach(async block => {
-       const txs = await fetchTransactions(await getTxFromBlock(block));
-       txs.forEach((tx) => {  
-            saveWallets(tx);
-            saveTx(block, tx);
-            saveTxAssets(tx);
-       })
-    });
+export async function blockfetcher({ block, auto = false }) {
+    if (auto) {
+        const start = 200000
+        const end = start + 2000
+        for (let block = start; block < end; block++) {
+            handleblock(block)
+        } return
+    }
+
+    const txs = fetchTx(await getTxFromBlock(block));
+    console.log(txs);
+
+
 }
 

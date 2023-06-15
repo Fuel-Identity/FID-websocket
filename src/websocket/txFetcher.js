@@ -1,4 +1,4 @@
-export function fetchTransactions(txs) {
+export default function fetchTransactions(txs) {
     const fetchedTx = [];
 
     txs.forEach(({ id, status, inputs, outputs }) => {
@@ -63,6 +63,9 @@ export function fetchTransactions(txs) {
                         // InputCoin
                         if (to) {
                             if(to != txData.from) txData.to = to;
+
+                            // special case: user send himself coins
+                            if(!txData.to) txData.to = to
 
                             txData.assetsOutputs.push({
                                 amount,
