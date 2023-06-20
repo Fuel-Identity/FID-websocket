@@ -3,7 +3,6 @@ import { createServer } from 'http';
 import WebSocket, { WebSocketServer } from 'ws';
 import { blockfetcher } from './src/websocket/blockfetcher.js';
 import { initDb } from './src/db/sequelize.js';
-import { getLatestBlocksCursor } from './src/websocket/functions.js';
 import logger from './src/logger/index.js';
 
 const app = express();
@@ -13,17 +12,12 @@ const log = logger()
 const wss = new WebSocketServer({ server });
 const port = process.env.PORT || 8080
 
-await initDb();
-
-// const lastCursor = await getLatestBlocksCursor();
+await initDb().catch((message) => {
+  log.error({ name: message.name }, 'Error while connecting the database')
+  process.exit(0);
+})
 
 blockfetcher({blocks: null, auto: true});
-
-const blocks = [
-  100718,
-]
-//blockfetcher({ block: 100718 });
-
 
 wss.on('connection', (ws) => {
   ws.send('Connected');

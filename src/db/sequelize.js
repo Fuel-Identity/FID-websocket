@@ -24,10 +24,5 @@ export const Wallet = walletModel(sequelize, DataTypes);
 
 
 export const initDb = () => { 
-    try {
-      return sequelize.sync({force: true}).then(() => log.info('Database initialized'))
-    } catch (error) {
-      log.error(error, 'Error while initializing the database');
-    }
-  
+    return sequelize.sync({force: true}).then(() => log.info('Database initialized'))
 }

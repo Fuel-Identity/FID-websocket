@@ -70,6 +70,13 @@ export function saveTxAssets({ id, assetsInput, assetsOutputs }) {
                 currency: assetId,
                 TxHash: id
             })
+            .catch(err => {
+              log.error({ 
+                type: err.type, 
+                message: err.message, 
+                wallet,
+              }, 'Assets saving error')
+            })
         } catch (error) {
             console.log(error);
         }
@@ -82,6 +89,14 @@ export function saveTxAssets({ id, assetsInput, assetsOutputs }) {
                 currency: assetId,
                 TxHash: id
             })
+            .catch(err => {
+              log.error({ 
+                type: err.type, 
+                message: err.message, 
+                wallet,
+              }, 'Tx saving error')
+            })
+            
         } catch (error) {
             console.log(error);
         }

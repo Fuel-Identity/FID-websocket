@@ -7,6 +7,7 @@ const txs = fetchTx(
     await getTxFromBlock(block)
         .then(async res => await res.json())
         .then(res => res.data.block.transactions)
+        .catch((err) => new Error(err))
 );
 
 parentPort.postMessage(txs)
